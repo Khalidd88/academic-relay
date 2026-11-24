@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
+}
+
+enum PlanStatus {
+  TRIAL
+  PRO
+  FREE
+}
+
+model User {
+  nim               String            @id
+  name              String
+  whatsappNumber    String            @map("whatsapp_number")
+  encryptedIcsData  String            @map("encrypted_ics_data") @db.Text
+  planStatus        PlanStatus        @default(TRIAL) @map("plan_status")
+  expiredAt         DateTime          @map("expired_at")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  notificationLogs  NotificationLog[]
+
+  @@map("users")
+}
+
+model NotificationLog {
+  id                String   @id @default(uuid())
+  nim               String
+  eventUid          String   @map("event_uid")
+  deadlineTimestamp DateTime @map("deadline_timestamp")
+  sentAt            DateTime @default(now()) @map("sent_at")
+  user              User     @relation(fields: [nim], references: [nim], onDelete: Cascade)
+
+  @@unique([nim, eventUid, deadlineTimestamp])
+  @@index([nim])
+  @@map("notification_logs")
+}
+
+model PendingRegistration {
+  nim               String   @id
+  name              String
+  whatsappNumber    String   @map("whatsapp_number")
+  encryptedIcsData  String   @map("encrypted_ics_data") @db.Text
+  verificationCode  String   @unique @map("verification_code")
+  createdAt         DateTime @default(now()) @map("created_at")
+  expiresAt         DateTime @map("expires_at")
+
+  @@index([verificationCode])
+  @@map("pending_registrations")
+}
