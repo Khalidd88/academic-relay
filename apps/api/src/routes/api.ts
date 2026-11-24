@@ -420,7 +420,7 @@ export const apiRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) =>
 
     // Active PRO users are those with planStatus PRO whose expiredAt is in the future
     const activeProUsers = allProUsers.filter((u) => dayjs(u.expiredAt).isAfter(now)).length;
-    const estimatedRevenue = activeProUsers * 10000;
+    const estimatedRevenue = activeProUsers * 15000;
     const revenueSplit5050 = Math.round(estimatedRevenue / 2);
 
     // Compute last 7 days registrations trend
@@ -638,6 +638,7 @@ export const apiRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) =>
           title: t.title,
           deadlineFormatted: t.deadlineFormatted,
           timeRemainingText: t.timeRemainingText,
+          url: t.url,
         })),
       });
 
@@ -778,7 +779,7 @@ export const apiRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) =>
           : `📋 *Daftar Tugas Aktif Minggu Ini (NIM: ${user.nim})*\n\n`;
 
         activeList.forEach((t, i) => {
-          replyMsg += `${i + 1}. *${t.title}*\n   ⏰ Batas: ${t.deadlineFormatted}\n   ⏳ Sisa: ${t.timeRemainingText}\n\n`;
+          replyMsg += `${i + 1}. *${t.title}*\n   ⏰ Batas: ${t.deadlineFormatted}\n   ⏳ Sisa: ${t.timeRemainingText}\n   🔗 Buka: ${t.url || 'https://elearning.esaunggul.ac.id/my/'}\n\n`;
         });
         replyMsg += `💡 _Ketik *DONE* jika sudah selesai tugas terdekat, atau *LINK* untuk buka dashboard._`;
 

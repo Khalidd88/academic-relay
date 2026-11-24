@@ -15,6 +15,7 @@ export interface WelcomeJobData {
     title: string;
     deadlineFormatted: string;
     timeRemainingText: string;
+    url?: string;
   }>;
 }
 
@@ -24,6 +25,7 @@ export interface ReminderJobData {
   whatsappNumber: string;
   eventUid: string;
   taskTitle: string;
+  taskUrl?: string;
   deadlineTimestamp: string; // ISO string
   deadlineFormatted: string;
   timeRemainingText: string;
@@ -102,6 +104,9 @@ export function startNotificationWorker(): Worker<NotificationJobPayload> {
             message += `📅 *Berikut ${tasks.length} deadline terdekat minggu ini:*\n`;
             tasks.forEach((t, i) => {
               message += `\n${i + 1}. *${t.title}*\n   ⏰ Batas: ${t.deadlineFormatted}\n   ⏳ Sisa: ${t.timeRemainingText}`;
+              if (t.url) {
+                message += `\n   🔗 Kumpul: ${t.url}`;
+              }
             });
             message += `\n\n`;
           }
@@ -119,7 +124,7 @@ export function startNotificationWorker(): Worker<NotificationJobPayload> {
         }
 
         case 'REMINDER': {
-          const { nim, whatsappNumber, eventUid, taskTitle, deadlineTimestamp, deadlineFormatted, timeRemainingText, noticeType } = job.data;
+          const { nim, whatsappNumber, eventUid, taskTitle, taskUrl, deadlineTimestamp, deadlineFormatted, timeRemainingText, noticeType } = job.data;
           const deadlineDate = new Date(deadlineTimestamp);
 
           // Double-check NotificationLog to prevent duplicate sending
@@ -142,11 +147,16 @@ export function startNotificationWorker(): Worker<NotificationJobPayload> {
             ? `🚨 *PERINGATAN H-3 JAM PENGUMPULAN TUGAS!*`
             : `🔔 *PENGINGAT H-1 HARI PENGUMPULAN TUGAS*`;
 
+          const linkText = taskUrl
+            ? `\n🔗 *Buka & Kumpul Langsung:*\n${taskUrl}\n`
+            : `\n🔗 *Buka eLearning UEU:*\nhttps://elearning.esaunggul.ac.id/my/\n`;
+
           const message = `${header}\n\n` +
             `📌 *Mata Kuliah / Tugas:*\n${taskTitle}\n\n` +
             `⏰ *Batas Akhir:* ${deadlineFormatted}\n` +
-            `⏳ *Sisa Waktu:* ${timeRemainingText}\n\n` +
-            `Pastikan tugas sudah diunggah ke eLearning UEU sebelum portal ditutup!\n\n` +
+            `⏳ *Sisa Waktu:* ${timeRemainingText}\n` +
+            linkText + `\n` +
+            `Pastikan tugas sudah diunggah sebelum portal ditutup!\n\n` +
             `💡 _Balas *DONE* jika kamu sudah mengumpulkannya._`;
 
           const sendResult = await sendNotification(whatsappNumber, message);

@@ -214,6 +214,10 @@ export default function HomePage() {
                           <span className="text-[11px] text-stone-500">
                             Selasa, 24 Nov 2026 • 23:59 WIB (1 hari 4 jam lagi)
                           </span>
+                          <br />
+                          <span className="text-[10px] text-blue-600 font-mono">
+                            🔗 elearning.esaunggul.ac.id/mod/quiz/view...
+                          </span>
                         </p>
                         <p>
                           2. <strong className="text-stone-950">PROYEK 2 | Laporan Individu Jigsaw</strong>
@@ -285,7 +289,7 @@ export default function HomePage() {
               </div>
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-[#1D4ED8]" />
-                <span>Gratis 14 Hari, lalu Rp 10rb/bln</span>
+                <span>Gratis 14 Hari, lalu Rp 15rb/bln</span>
               </div>
             </div>
           </div>

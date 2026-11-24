@@ -17,6 +17,7 @@ export interface CalendarTask {
   uid: string;
   title: string;
   description: string;
+  url?: string;
   deadline: Date;
   deadlineFormatted: string;
   isPast: boolean;
@@ -112,10 +113,28 @@ export function parseCalendarTasks(icsContent: string): CalendarTask[] {
     const isPast = dayjs(deadlineJkt).isBefore(now);
     const countdown = formatCountdown(deadlineJkt);
 
+    // Extract direct eLearning / Siakad assignment link
+    let directUrl: string | undefined = undefined;
+    if (typeof item.url === 'string' && item.url.startsWith('http')) {
+      directUrl = item.url.trim();
+    } else if (item.url && typeof (item.url as any).val === 'string' && (item.url as any).val.startsWith('http')) {
+      directUrl = (item.url as any).val.trim();
+    } else if (item.description) {
+      const match = String(item.description).match(/https?:\/\/[^\s"'<>]+/i);
+      if (match) {
+        directUrl = match[0].trim();
+      }
+    }
+
+    if (!directUrl) {
+      directUrl = 'https://elearning.esaunggul.ac.id/my/';
+    }
+
     tasks.push({
       uid,
       title,
       description,
+      url: directUrl,
       deadline: deadlineJkt,
       deadlineFormatted: formatJakartaDate(deadlineJkt),
       isPast,

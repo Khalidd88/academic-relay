@@ -689,6 +689,10 @@ export default function UserMagicDashboardPage() {
             <div className="space-y-2 text-xs text-stone-700 mb-5">
               <div className="flex items-center gap-2">
                 <Check className="w-3.5 h-3.5 text-[#1D4ED8] flex-shrink-0" />
+                <span>Direct Link 1-klik buka &amp; kumpul tugas di eLearning UEU</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="w-3.5 h-3.5 text-[#1D4ED8] flex-shrink-0" />
                 <span>Pengingat prioritas H-1 hari &amp; H-3 jam semua mata kuliah</span>
               </div>
               <div className="flex items-center gap-2">
