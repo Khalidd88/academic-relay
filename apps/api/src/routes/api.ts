@@ -836,9 +836,9 @@ export const apiRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) =>
   });
 
   /**
-   * POST /webhook/waha
+   * POST /webhook/waha (and alias /api/webhook/waha)
    */
-  fastify.post('/webhook/waha', async (request, reply) => {
+  const wahaWebhookHandler = async (request: any, reply: any) => {
     const body = request.body as any;
     const payload = body?.payload;
 
@@ -846,21 +846,61 @@ export const apiRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) =>
       return reply.send({ ok: true, ignored: true });
     }
 
-    console.log(`[WAHA Webhook] Raw from: "${payload.from}", body: "${payload.body}"`);
-    const from = String(payload.from || '').replace(/[:@].*$/, '');
+    const rawFrom = String(payload.from || '');
     const text = String(payload.body || payload.text || '');
 
-    if (!from || !text) {
-      console.log(`[WAHA Webhook] Ignored empty from or text (from: "${from}", text: "${text}")`);
+    // Ignore group messages & status broadcasts
+    if (!rawFrom || !text || rawFrom.endsWith('@g.us') || rawFrom === 'status@broadcast') {
       return reply.send({ ok: true, ignored: true });
     }
 
-    console.log(`[WAHA Webhook] Processing from: "${from}", text: "${text}"`);
-    await handleIncomingMessage(from, text, async (msgText) => {
-      console.log(`[WAHA Webhook] Sending reply to "${from}": "${msgText.slice(0, 50)}..."`);
-      await sendNotification(from, msgText);
+    // Resolve real phone number (handle WhatsApp @lid JIDs)
+    let resolvedJid = rawFrom;
+    const altJid =
+      payload._data?.key?.remoteJidAlt ||
+      payload._data?.key?.senderPn ||
+      payload._data?.senderPn ||
+      payload.participant;
+
+    if (altJid && String(altJid).includes('@') && !String(altJid).endsWith('@lid')) {
+      resolvedJid = String(altJid);
+    } else if (rawFrom.endsWith('@lid')) {
+      try {
+        const wahaBase = process.env.WAHA_BASE_URL || 'http://127.0.0.1:3005';
+        const wahaSession = process.env.WAHA_SESSION || 'default';
+        const wahaKey = process.env.WAHA_API_KEY || '';
+        const headers: Record<string, string> = {};
+        if (wahaKey) headers['X-Api-Key'] = wahaKey;
+
+        const lidRes = await fetch(`${wahaBase}/api/${wahaSession}/lids/${encodeURIComponent(rawFrom)}`, {
+          headers,
+        });
+        if (lidRes.ok) {
+          const lidData = (await lidRes.json()) as { pn?: string };
+          if (lidData?.pn) {
+            resolvedJid = lidData.pn;
+          }
+        }
+      } catch (err) {
+        console.warn('[WAHA Webhook] Failed to resolve LID:', err);
+      }
+    }
+
+    const fromPhone = resolvedJid.replace(/[:@].*$/, '').replace(/\D/g, '');
+    console.log(`[WAHA Webhook] rawFrom: "${rawFrom}", resolvedPhone: "${fromPhone}", text: "${text}"`);
+
+    if (!fromPhone) {
+      return reply.send({ ok: true, ignored: true });
+    }
+
+    await handleIncomingMessage(fromPhone, text, async (msgText) => {
+      console.log(`[WAHA Webhook] Sending reply to "${rawFrom}": "${msgText.slice(0, 50)}..."`);
+      await sendNotification(rawFrom, msgText);
     });
 
     return reply.send({ ok: true });
-  });
+  };
+
+  fastify.post('/webhook/waha', wahaWebhookHandler);
+  fastify.post('/api/webhook/waha', wahaWebhookHandler);
 };

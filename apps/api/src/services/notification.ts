@@ -77,7 +77,7 @@ export async function sendNotification(
   const apiKey = process.env.WAHA_API_KEY || '';
 
   try {
-    const formattedChatId = `${cleanTargetNumber}@c.us`;
+    const formattedChatId = targetNumber.includes('@') ? targetNumber : `${cleanTargetNumber}@c.us`;
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
